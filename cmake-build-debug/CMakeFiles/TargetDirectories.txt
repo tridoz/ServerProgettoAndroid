@@ -1,0 +1,3 @@
+/home/trida/CLionProjects/ServerProgettoAndroid/cmake-build-debug/CMakeFiles/ServerProgettoAndroid.dir
+/home/trida/CLionProjects/ServerProgettoAndroid/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/trida/CLionProjects/ServerProgettoAndroid/cmake-build-debug/CMakeFiles/rebuild_cache.dir
