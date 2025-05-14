@@ -4,6 +4,7 @@
 
 #include "TCP_Server.h"
 
+#include <iomanip>
 #include <random>
 #include <sstream>
 
@@ -12,7 +13,7 @@
 TCP_Server::TCP_Server() {
 
     if (( this->server_socket = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-        perror("Server Socket creation failed");
+       this->error_log("Error while creating socket");
         exit(EXIT_FAILURE);
     }
 
@@ -21,7 +22,7 @@ TCP_Server::TCP_Server() {
     this->address.sin_port = htons(this->port);
 
     if ( bind(this->server_socket, (struct sockaddr *) &this->address, sizeof(this->address)) < 0 ) {
-        perror("Server Socket bind failed");
+        this->error_log("Error while binding server socket");
         close(this->server_socket);
         exit(EXIT_FAILURE);
     }
@@ -29,11 +30,51 @@ TCP_Server::TCP_Server() {
 
 }
 
+std::string TCP_Server::get_time() {
+
+    auto now = std::chrono::system_clock::now();
+    std::time_t current_time = std::chrono::system_clock::to_time_t(now);
+
+    std::tm* local_time = std::localtime(&current_time);
+    std::ostringstream oss;
+
+    oss << std::put_time(local_time, "%Y-%m%d %H:%M:%S");
+    return "[" + oss.str() + "]";
+
+}
+
+
+void TCP_Server::general_log(std::string message) {
+    std::ofstream file("server.log", std::ios::app);
+    file << "LOG: " << this->get_time() <<"\n" << message << "\n\n";
+    file.close();
+}
+
+void TCP_Server::error_log(std::string message) {
+    std::ofstream file("server.log", std::ios::app);
+    std::string cause = strerror(errno);
+    file << "ERR: " << this->get_time() <<"\n" << message << "\n" << cause << "\n\n";
+    file.close();
+}
+
+void TCP_Server::user_log(std::string username, std::string message) {
+    std::ofstream file(username+".log", std::ios::app);
+    file <<"LOG: " << this->get_time() << "\n" + message + "\n\n";
+    file.close();
+}
+
+void TCP_Server::user_error_log(std::string username, std::string message) {
+    std::ofstream file(username+".log", std::ios::app);
+    std::string cause = strerror(errno);
+    file << "ERR: " << this->get_time() << "\n" << message << "\n" << cause << "\n\n";
+    file.close();
+}
+
 void TCP_Server::handle_client(int client_socket) {
+
     Database_Connection conn;
 
     char rcv_buffer[ this->buffer_size ];
-    char snd_buffer[ this->buffer_size ];
 
     int bytes_received;
 
@@ -53,33 +94,30 @@ void TCP_Server::handle_client(int client_socket) {
     request_tokens["artist_name"] = "";
     request_tokens["song_path"] = "";
 
-
     while (true) {
         whole_received_message = "";
         bytes_received = recv(client_socket, rcv_buffer, this->buffer_size, 0);
 
         if (bytes_received < 0) {
-            std::cerr << "Errore nella ricezione dei dati: " << strerror(errno) << std::endl;
-            break;  // Uscita dal ciclo in caso di errore
-        } else if (bytes_received == 0) {
-            std::cout << "Connessione chiusa dal client." << std::endl;
+            this->user_error_log(request_tokens["username"], "Error while receiving message");
+            break;
+        }
+
+        if (bytes_received == 0) {
+            this->user_log(request_tokens["username"], "Connection closed by client");
             if ( request_tokens["username"] != "" ) {
                 conn.delete_user_token(request_tokens["username"]);
             }
-            break;  // Uscita dal ciclo se la connessione è chiusa
-        } else {
-            // Assicurati di aggiungere solo il contenuto ricevuto al messaggio
-            whole_received_message += std::string(rcv_buffer);
+            break;
         }
 
+        whole_received_message += std::string(rcv_buffer);
 
-        std::cout << "Messaggio ricevuto: " << whole_received_message << std::endl;
 
-        int output = 200;
+        this->user_log(request_tokens["username"], "Received message: <" + whole_received_message + ">");
 
         std::stringstream ss(whole_received_message);
         std::string item;
-
 
         while ( std::getline(ss, item, ';')) {
             size_t pos = item.find(':');
@@ -109,9 +147,11 @@ void TCP_Server::handle_client(int client_socket) {
 
                     response = "response_code:"+std::to_string(200)+";access_token:"+access_token+";refresh_token:"+refresh_token+";revoke_token:"+revoke_token+"\n";
                     conn.add_token(access_token, refresh_token, revoke_token, request_tokens["username"]);
+
                 }else {
                     response = "response_code:"+std::to_string(404)+"\n";
                 }
+
                 break;
             }
 
@@ -173,13 +213,14 @@ void TCP_Server::handle_client(int client_socket) {
                 }
 
                 int user_id = conn.find_user_id(request_tokens["username"]);
+            
                 if ( user_id == -1) {
                     std::cout<<"Questo Username per il get delle playlist utente non esiste\n";
                     response = "response_code:"+std::to_string(404)+"\n";
                     break;
                 }
 
-                std::string user_playlists = conn.get_user_playlist(user_id);
+                std::string user_playlists = conn.get_user_playlist(user_id, request_tokens["username"]);
                 response = "response_code:"+std::to_string(200)+";playlists:"+user_playlists+"\n";
 
                 break;
@@ -220,7 +261,9 @@ void TCP_Server::Start() {
     }
 
     std::cout<<"Server Listening on port "<<this->port<<"\n";
+
     while (true) {
+
         this->client_socket = accept(this->server_socket, (struct sockaddr*)&this->address, &this->address_len);
         if ( this->client_socket < 0) {
             perror("Server Socket acceptance failed");

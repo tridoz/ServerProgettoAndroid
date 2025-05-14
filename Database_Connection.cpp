@@ -20,8 +20,9 @@ int Database_Connection::find_song_id(std::string song_name) {
 
 }
 
-std::string Database_Connection::get_user_playlist(int user_id) {
-    this->pstmt.reset( this->connection->prepareStatement("SELECT Title FROM Playlist WHERE Id_Utente = ?") );
+std::string Database_Connection::get_user_playlist(int user_id, std::string username) {
+
+     this->pstmt.reset( this->connection->prepareStatement("SELECT Title FROM Playlist WHERE Id_Utente = ?") );
     this->pstmt->setInt(1, user_id);
 
     this->result.reset( this->pstmt->executeQuery() );
@@ -34,7 +35,7 @@ std::string Database_Connection::get_user_playlist(int user_id) {
 
     do {
         std::string title = this->result->getString("Title");
-        playlist_set += title + "\t";
+        playlist_set += title + "|" + username +"&";
     } while ( this->result->next() );
 
     playlist_set += "]";
@@ -158,22 +159,6 @@ int Database_Connection::check_if_token_valid(std::string username, std::string 
 
     sql::ResultSetMetaData* meta = this->result->getMetaData();
     int columnCount = meta->getColumnCount();
-
-    // Stampa i nomi delle colonne
-    for (int i = 1; i <= columnCount; ++i) {
-        std::cout << meta->getColumnLabel(i);
-        if (i < columnCount) std::cout << " | ";
-    }
-    std::cout << std::endl;
-
-    // Stampa ogni riga
-    while (this->result->next()) {
-        for (int i = 1; i <= columnCount; ++i) {
-            std::cout << this->result->getString(i);
-            if (i < columnCount) std::cout << " | ";
-        }
-        std::cout << std::endl;
-    }
 
     this->result->last();
     if ( this->result->getRow() == 1) {
