@@ -113,8 +113,7 @@ void TCP_Server::handle_client(int client_socket) {
 
         whole_received_message += std::string(rcv_buffer);
 
-
-        this->user_log(request_tokens["username"], "Received message: <" + whole_received_message + ">");
+        this->user_log(request_tokens["username"], "Received message: \n" + whole_received_message );
 
         std::stringstream ss(whole_received_message);
         std::string item;
@@ -145,11 +144,17 @@ void TCP_Server::handle_client(int client_socket) {
                         revoke_token = generate_random_token();
                     }while( conn.check_token_generation(access_token, refresh_token, revoke_token) == -1 ) ;
 
-                    response = "response_code:"+std::to_string(200)+";access_token:"+access_token+";refresh_token:"+refresh_token+";revoke_token:"+revoke_token+"\n";
+                    this->user_log(request_tokens["access_token"], "Tokens created with success:\n" "access: " + access_token + "\n" + "refresh:" + refresh_token + "\n" + "revoke: " + revoke_token );
+
+                    response = "response_code:" + std::to_string(200) + ";access_token:" + access_token + ";refresh_token:" + refresh_token + ";revoke_token:" + revoke_token + "\n";
+
                     conn.add_token(access_token, refresh_token, revoke_token, request_tokens["username"]);
 
                 }else {
+
                     response = "response_code:"+std::to_string(404)+"\n";
+                    this->user_log(request_tokens["username"], "Credential aren't valid");
+
                 }
 
                 break;
@@ -159,8 +164,10 @@ void TCP_Server::handle_client(int client_socket) {
                 int check_if_user_exist_output = conn.check_if_user_exists(request_tokens["username"]);
                 if ( check_if_user_exist_output == 1) {
                     response = "response_code:"+std::to_string(404)+"\n";
+                    this->user_log(request_tokens["username"], "Tried to register an already existing account");
                 }else {
                     response = "response_code:"+std::to_string(200)+"\n";
+                    this->user_log(request_tokens["username"], "Registered new account successfully");
                     conn.add_user(request_tokens["username"], request_tokens["password"]);
                 }
                 break;
@@ -203,29 +210,32 @@ void TCP_Server::handle_client(int client_socket) {
                 break;
 
             case 15:
+
                 int token_valid = conn.check_if_token_valid(request_tokens["username"], request_tokens["access_token"], 1);
 
                 if ( token_valid != 1) {
-                    std::cout<<"Username e Access_Token per il get delle playlist utente non validi\n";
 
                     response = "response_code:"+std::to_string(403)+"\n";
+                    this->user_log(request_tokens["username"], "Token validation failed, invalid access token");
                     break;
                 }
 
                 int user_id = conn.find_user_id(request_tokens["username"]);
             
                 if ( user_id == -1) {
-                    std::cout<<"Questo Username per il get delle playlist utente non esiste\n";
                     response = "response_code:"+std::to_string(404)+"\n";
+                    this->user_log(request_tokens["username"], "User does not exist");
                     break;
                 }
 
+                this->user_log(request_tokens["username"], "Playlist sended_back");
                 std::string user_playlists = conn.get_user_playlist(user_id, request_tokens["username"]);
                 response = "response_code:"+std::to_string(200)+";playlists:"+user_playlists+"\n";
 
                 break;
         }
 
+        this->user_log(request_tokens["username"], "Response\n" + response );
         send(client_socket, response.c_str(), response.size(), 0);
     }
 
@@ -249,33 +259,31 @@ std::string TCP_Server::generate_random_token() {
     return randomString;
 }
 
-
-
-
 void TCP_Server::Start() {
 
     if (listen(this->server_socket, this->max_clients) < 0) {
-        perror("Server Socket listen failed");
+        this->error_log("Error while listening on the server socket" + std::string(strerror(errno)) );
         close(this->server_socket);
         exit(EXIT_FAILURE);
     }
 
-    std::cout<<"Server Listening on port "<<this->port<<"\n";
+    this->general_log("Server is listening on port" + this->port );
 
     while (true) {
 
         this->client_socket = accept(this->server_socket, (struct sockaddr*)&this->address, &this->address_len);
         if ( this->client_socket < 0) {
-            perror("Server Socket acceptance failed");
+            this->error_log("Server Socket acceptance failed");
             continue;
         }
 
         std::lock_guard<std::mutex> lock(this->mtx);
         if ( this->threads.size() >= this->max_clients ) {
             std::cout<<"Max clients reached. Connection refused: "<<this->client_socket<<std::endl;
+            this->general_log("Max clients reached. Connection refused to: " + this->client_socket );
             close( this->client_socket );
         }else {
-            std::cout<<"Nuovo client accettato"<<std::endl;
+            this->general_log("New client connected");
             this->threads.emplace_back([this]() {
                 this->handle_client(this->client_socket);
             });
