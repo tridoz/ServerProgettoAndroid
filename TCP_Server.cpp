@@ -46,27 +46,42 @@ std::string TCP_Server::get_time() {
 
 void TCP_Server::general_log(std::string message) {
     std::ofstream file("server.log", std::ios::app);
-    file << "LOG: " << this->get_time() <<"\n" << message << "\n\n";
+    std::string log = "LOG: " +  this->get_time() + "\n" + message + "\n\n";
+
+    file << message;
+    std::cout << message;
+
     file.close();
 }
 
 void TCP_Server::error_log(std::string message) {
     std::ofstream file("server.log", std::ios::app);
     std::string cause = strerror(errno);
-    file << "ERR: " << this->get_time() <<"\n" << message << "\n" << cause << "\n\n";
+
+    std::string log = "ERR: " + this->get_time() + "\n" + message + "\n" + cause + "\n\n";
+    file << log;
+    std::cerr << log;
     file.close();
 }
 
 void TCP_Server::user_log(std::string username, std::string message) {
     std::ofstream file(username+".log", std::ios::app);
-    file <<"LOG: " << this->get_time() << "\n" + message + "\n\n";
+
+    std::string log = "LOG: " + this->get_time() + "\n" + message + "\n\n";
+    file << log;
+    std::cout << log;
+
     file.close();
 }
 
 void TCP_Server::user_error_log(std::string username, std::string message) {
     std::ofstream file(username+".log", std::ios::app);
     std::string cause = strerror(errno);
-    file << "ERR: " << this->get_time() << "\n" << message << "\n" << cause << "\n\n";
+
+    std::string log = "ERR: " + this->get_time() + "\n" + message + "\n";
+    file << log;
+    std::cout << log;
+
     file.close();
 }
 
