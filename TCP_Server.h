@@ -27,14 +27,14 @@ private:
     std::mutex mtx;
 
     sockaddr_in address;
-    socklen_t address_len = sizeof(address);
-    void handle_client(int client_socket);
+    socklen_t address_len = sizeof( address );
+    void handle_client( int client_socket );
     std::string generate_random_token();
 
-    void general_log(std::string message);
-    void user_log(std::string username, std::string message);
-    void error_log(std::string message);
-    void user_error_log(std::string username, std::string message);
+    void general_log( std::string message );
+    void user_log( std::string username, std::string message );
+    void error_log( std::string message );
+    void user_error_log( std::string username, std::string message );
 
     std::string get_time();
 
