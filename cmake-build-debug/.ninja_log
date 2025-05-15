@@ -3,4 +3,11 @@
 8	1013	1746696034476675764	CMakeFiles/ServerProgettoAndroid.dir/TCP_Server.cpp.o	ca7063fb31855d55
 1013	1224	1746696035481783326	ServerProgettoAndroid	bbfbff545e3f4664
 7	661	1746696034475675657	CMakeFiles/ServerProgettoAndroid.dir/main.cpp.o	db161907d02d8fed
-1	71	1747240151383775784	build.ninja	97aca46cdbdaf327
+1	71	1747248529405305764	build.ninja	97aca46cdbdaf327
+23	952	1747252471331389033	CMakeFiles/ServerProgettoAndroid.dir/main.cpp.o	db161907d02d8fed
+25	1035	1747252471333388991	CMakeFiles/ServerProgettoAndroid.dir/Logger.cpp.o	cf71cbe62c284c8e
+24	1039	1747252471332389012	CMakeFiles/ServerProgettoAndroid.dir/Database_Connection.cpp.o	dc6bc74f3d0e45b6
+7	1396	1747252496747866681	CMakeFiles/ServerProgettoAndroid.dir/TCP_Server.cpp.o	ca7063fb31855d55
+1396	1726	1747252498136838747	ServerProgettoAndroid	cf99f70e5bec4b5f
+2	1411	1747252612236742430	CMakeFiles/ServerProgettoAndroid.dir/Logger.cpp.o	cf71cbe62c284c8e
+1411	1649	1747252613645718813	ServerProgettoAndroid	cf99f70e5bec4b5f

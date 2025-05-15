@@ -14,6 +14,7 @@
 #include <fstream>
 
 #include "Database_Connection.h"
+#include "Logger.h"
 
 class TCP_Server {
 
@@ -31,17 +32,16 @@ private:
     void handle_client( int client_socket );
     std::string generate_random_token();
 
-    void general_log( std::string message );
-    void user_log( std::string username, std::string message );
-    void error_log( std::string message );
-    void user_error_log( std::string username, std::string message );
 
-    std::string get_time();
 
 public:
     TCP_Server();
 
     void Start();
+
+
+
+
 
 };
 

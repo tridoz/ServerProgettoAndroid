@@ -20,6 +20,8 @@ add_executable(ServerProgettoAndroid
         Database_Connection.h
         TCP_Server.cpp
         TCP_Server.h
+        Logger.cpp
+        Logger.h
 )
 
 # Linka MySQL Connector/C++ e OpenSSL
